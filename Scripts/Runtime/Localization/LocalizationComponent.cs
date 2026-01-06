@@ -24,11 +24,11 @@ namespace UnityGameFramework.Runtime
         private ILocalizationManager m_LocalizationManager = null;
         private EventComponent m_EventComponent = null;
 
-        [SerializeField]
-        private bool m_EnableLoadDictionaryUpdateEvent = false;
-
-        [SerializeField]
-        private bool m_EnableLoadDictionaryDependencyAssetEvent = false;
+        // [SerializeField]
+        // private bool m_EnableLoadDictionaryUpdateEvent = false;
+        //
+        // [SerializeField]
+        // private bool m_EnableLoadDictionaryDependencyAssetEvent = false;
 
         [SerializeField]
         private string m_LocalizationHelperTypeName = "UnityGameFramework.Runtime.DefaultLocalizationHelper";
@@ -103,16 +103,6 @@ namespace UnityGameFramework.Runtime
 
             m_LocalizationManager.ReadDataSuccess += OnReadDataSuccess;
             m_LocalizationManager.ReadDataFailure += OnReadDataFailure;
-
-            if (m_EnableLoadDictionaryUpdateEvent)
-            {
-                m_LocalizationManager.ReadDataUpdate += OnReadDataUpdate;
-            }
-
-            if (m_EnableLoadDictionaryDependencyAssetEvent)
-            {
-                m_LocalizationManager.ReadDataDependencyAsset += OnReadDataDependencyAsset;
-            }
         }
 
         private void Start()
@@ -131,14 +121,7 @@ namespace UnityGameFramework.Runtime
                 return;
             }
 
-            if (baseComponent.EditorResourceMode)
-            {
-                m_LocalizationManager.SetResourceManager(baseComponent.EditorResourceHelper);
-            }
-            else
-            {
-                m_LocalizationManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
-            }
+            m_LocalizationManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
 
             LocalizationHelperBase localizationHelper = Helper.CreateHelper(m_LocalizationHelperTypeName, m_CustomLocalizationHelper);
             if (localizationHelper == null)
@@ -154,7 +137,7 @@ namespace UnityGameFramework.Runtime
 
             m_LocalizationManager.SetDataProviderHelper(localizationHelper);
             m_LocalizationManager.SetLocalizationHelper(localizationHelper);
-            m_LocalizationManager.Language = baseComponent.EditorResourceMode && baseComponent.EditorLanguage != Language.Unspecified ? baseComponent.EditorLanguage : m_LocalizationManager.SystemLanguage;
+            m_LocalizationManager.Language = baseComponent.EditorLanguage != Language.Unspecified ? baseComponent.EditorLanguage : m_LocalizationManager.SystemLanguage;
             if (m_CachedBytesSize > 0)
             {
                 EnsureCachedBytesSize(m_CachedBytesSize);
@@ -774,16 +757,6 @@ namespace UnityGameFramework.Runtime
         {
             Log.Warning("Load dictionary failure, asset name '{0}', error message '{1}'.", e.DataAssetName, e.ErrorMessage);
             m_EventComponent.Fire(this, LoadDictionaryFailureEventArgs.Create(e));
-        }
-
-        private void OnReadDataUpdate(object sender, ReadDataUpdateEventArgs e)
-        {
-            m_EventComponent.Fire(this, LoadDictionaryUpdateEventArgs.Create(e));
-        }
-
-        private void OnReadDataDependencyAsset(object sender, ReadDataDependencyAssetEventArgs e)
-        {
-            m_EventComponent.Fire(this, LoadDictionaryDependencyAssetEventArgs.Create(e));
         }
     }
 }
