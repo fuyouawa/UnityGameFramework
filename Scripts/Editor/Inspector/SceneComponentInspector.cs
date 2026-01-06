@@ -5,6 +5,7 @@
 // Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
+using GameFramework.Resource;
 using UnityEditor;
 using UnityEngine;
 using UnityGameFramework.Runtime;
@@ -14,8 +15,8 @@ namespace UnityGameFramework.Editor
     [CustomEditor(typeof(SceneComponent))]
     internal sealed class SceneComponentInspector : GameFrameworkInspector
     {
-        private SerializedProperty m_EnableLoadSceneUpdateEvent = null;
-        private SerializedProperty m_EnableLoadSceneDependencyAssetEvent = null;
+        // private SerializedProperty m_EnableLoadSceneUpdateEvent = null;
+        // private SerializedProperty m_EnableLoadSceneDependencyAssetEvent = null;
 
         public override void OnInspectorGUI()
         {
@@ -27,8 +28,8 @@ namespace UnityGameFramework.Editor
 
             EditorGUI.BeginDisabledGroup(EditorApplication.isPlayingOrWillChangePlaymode);
             {
-                EditorGUILayout.PropertyField(m_EnableLoadSceneUpdateEvent);
-                EditorGUILayout.PropertyField(m_EnableLoadSceneDependencyAssetEvent);
+                // EditorGUILayout.PropertyField(m_EnableLoadSceneUpdateEvent);
+                // EditorGUILayout.PropertyField(m_EnableLoadSceneDependencyAssetEvent);
             }
             EditorGUI.EndDisabledGroup();
 
@@ -47,11 +48,11 @@ namespace UnityGameFramework.Editor
 
         private void OnEnable()
         {
-            m_EnableLoadSceneUpdateEvent = serializedObject.FindProperty("m_EnableLoadSceneUpdateEvent");
-            m_EnableLoadSceneDependencyAssetEvent = serializedObject.FindProperty("m_EnableLoadSceneDependencyAssetEvent");
+            // m_EnableLoadSceneUpdateEvent = serializedObject.FindProperty("m_EnableLoadSceneUpdateEvent");
+            // m_EnableLoadSceneDependencyAssetEvent = serializedObject.FindProperty("m_EnableLoadSceneDependencyAssetEvent");
         }
 
-        private string GetSceneNameString(string[] sceneAssetNames)
+        private string GetSceneNameString(AssetAddress[] sceneAssetNames)
         {
             if (sceneAssetNames == null || sceneAssetNames.Length <= 0)
             {
@@ -59,14 +60,14 @@ namespace UnityGameFramework.Editor
             }
 
             string sceneNameString = string.Empty;
-            foreach (string sceneAssetName in sceneAssetNames)
+            foreach (AssetAddress sceneAssetName in sceneAssetNames)
             {
                 if (!string.IsNullOrEmpty(sceneNameString))
                 {
                     sceneNameString += ", ";
                 }
 
-                sceneNameString += SceneComponent.GetSceneName(sceneAssetName);
+                sceneNameString += ((SceneComponent)target).GetSceneName(sceneAssetName);
             }
 
             return sceneNameString;
