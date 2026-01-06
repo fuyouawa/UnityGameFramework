@@ -24,19 +24,20 @@ namespace UnityGameFramework.Runtime
         private const int DefaultPriority = 0;
 
         private IDataTableManager m_DataTableManager = null;
+        private IResourceManager m_ResourceManager = null;
         private EventComponent m_EventComponent = null;
-
-        [SerializeField]
-        private bool m_EnableLoadDataTableUpdateEvent = false;
-
-        [SerializeField]
-        private bool m_EnableLoadDataTableDependencyAssetEvent = false;
 
         [SerializeField]
         private string m_DataTableHelperTypeName = "UnityGameFramework.Runtime.DefaultDataTableHelper";
 
         [SerializeField]
         private DataTableHelperBase m_CustomDataTableHelper = null;
+
+        [SerializeField]
+        private string m_DataRowHelperResolverTypeName = "UnityGameFramework.Runtime.DefaultDataRowHelperResolver";
+
+        [SerializeField]
+        private DataRowHelperResolverBase m_CustomDataRowHelperResolver = null;
 
         [SerializeField]
         private int m_CachedBytesSize = 0;
@@ -94,14 +95,8 @@ namespace UnityGameFramework.Runtime
                 return;
             }
 
-            if (baseComponent.EditorResourceMode)
-            {
-                m_DataTableManager.SetResourceManager(baseComponent.EditorResourceHelper);
-            }
-            else
-            {
-                m_DataTableManager.SetResourceManager(GameFrameworkEntry.GetModule<IResourceManager>());
-            }
+            m_ResourceManager = GameFrameworkEntry.GetModule<IResourceManager>();
+            m_DataTableManager.SetResourceManager(m_ResourceManager);
 
             DataTableHelperBase dataTableHelper = Helper.CreateHelper(m_DataTableHelperTypeName, m_CustomDataTableHelper);
             if (dataTableHelper == null)
@@ -115,8 +110,21 @@ namespace UnityGameFramework.Runtime
             transform.SetParent(this.transform);
             transform.localScale = Vector3.one;
 
+            DataRowHelperResolverBase dataRowHelperResolver = Helper.CreateHelper(m_DataRowHelperResolverTypeName, m_CustomDataRowHelperResolver);
+            if (dataRowHelperResolver == null)
+            {
+                Log.Error("Can not create data row helper resolver.");
+                return;
+            }
+
+            dataRowHelperResolver.name = "Data Row Helper Resolver";
+            Transform transform2 = dataRowHelperResolver.transform;
+            transform2.SetParent(this.transform);
+            transform2.localScale = Vector3.one;
+
             m_DataTableManager.SetDataProviderHelper(dataTableHelper);
             m_DataTableManager.SetDataTableHelper(dataTableHelper);
+            m_DataTableManager.SetDataRowHelperResolver(dataRowHelperResolver);
             if (m_CachedBytesSize > 0)
             {
                 EnsureCachedBytesSize(m_CachedBytesSize);
@@ -145,7 +153,7 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <returns>是否存在数据表。</returns>
-        public bool HasDataTable<T>() where T : IDataRow
+        public bool HasDataTable<T>()
         {
             return m_DataTableManager.HasDataTable<T>();
         }
@@ -166,7 +174,7 @@ namespace UnityGameFramework.Runtime
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <param name="name">数据表名称。</param>
         /// <returns>是否存在数据表。</returns>
-        public bool HasDataTable<T>(string name) where T : IDataRow
+        public bool HasDataTable<T>(string name)
         {
             return m_DataTableManager.HasDataTable<T>(name);
         }
@@ -187,7 +195,7 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <returns>要获取的数据表。</returns>
-        public IDataTable<T> GetDataTable<T>() where T : IDataRow
+        public IDataTable<T> GetDataTable<T>()
         {
             return m_DataTableManager.GetDataTable<T>();
         }
@@ -208,7 +216,7 @@ namespace UnityGameFramework.Runtime
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <param name="name">数据表名称。</param>
         /// <returns>要获取的数据表。</returns>
-        public IDataTable<T> GetDataTable<T>(string name) where T : IDataRow
+        public IDataTable<T> GetDataTable<T>(string name)
         {
             return m_DataTableManager.GetDataTable<T>(name);
         }
@@ -246,7 +254,7 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <returns>要创建的数据表。</returns>
-        public IDataTable<T> CreateDataTable<T>() where T : class, IDataRow, new()
+        public IDataTable<T> CreateDataTable<T>()
         {
             return CreateDataTable<T>(null);
         }
@@ -267,22 +275,12 @@ namespace UnityGameFramework.Runtime
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <param name="name">数据表名称。</param>
         /// <returns>要创建的数据表。</returns>
-        public IDataTable<T> CreateDataTable<T>(string name) where T : class, IDataRow, new()
+        public IDataTable<T> CreateDataTable<T>(string name)
         {
             IDataTable<T> dataTable = m_DataTableManager.CreateDataTable<T>(name);
             DataTableBase dataTableBase = (DataTableBase)dataTable;
             dataTableBase.ReadDataSuccess += OnReadDataSuccess;
             dataTableBase.ReadDataFailure += OnReadDataFailure;
-
-            if (m_EnableLoadDataTableUpdateEvent)
-            {
-                dataTableBase.ReadDataUpdate += OnReadDataUpdate;
-            }
-
-            if (m_EnableLoadDataTableDependencyAssetEvent)
-            {
-                dataTableBase.ReadDataDependencyAsset += OnReadDataDependencyAsset;
-            }
 
             return dataTable;
         }
@@ -299,16 +297,6 @@ namespace UnityGameFramework.Runtime
             dataTable.ReadDataSuccess += OnReadDataSuccess;
             dataTable.ReadDataFailure += OnReadDataFailure;
 
-            if (m_EnableLoadDataTableUpdateEvent)
-            {
-                dataTable.ReadDataUpdate += OnReadDataUpdate;
-            }
-
-            if (m_EnableLoadDataTableDependencyAssetEvent)
-            {
-                dataTable.ReadDataDependencyAsset += OnReadDataDependencyAsset;
-            }
-
             return dataTable;
         }
 
@@ -317,7 +305,7 @@ namespace UnityGameFramework.Runtime
         /// </summary>
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <returns>是否销毁数据表成功。</returns>
-        public bool DestroyDataTable<T>() where T : IDataRow, new()
+        public bool DestroyDataTable<T>()
         {
             return m_DataTableManager.DestroyDataTable<T>();
         }
@@ -338,7 +326,7 @@ namespace UnityGameFramework.Runtime
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <param name="name">数据表名称。</param>
         /// <returns>是否销毁数据表成功。</returns>
-        public bool DestroyDataTable<T>(string name) where T : IDataRow
+        public bool DestroyDataTable<T>(string name)
         {
             return m_DataTableManager.DestroyDataTable<T>(name);
         }
@@ -360,7 +348,7 @@ namespace UnityGameFramework.Runtime
         /// <typeparam name="T">数据表行的类型。</typeparam>
         /// <param name="dataTable">要销毁的数据表。</param>
         /// <returns>是否销毁数据表成功。</returns>
-        public bool DestroyDataTable<T>(IDataTable<T> dataTable) where T : IDataRow
+        public bool DestroyDataTable<T>(IDataTable<T> dataTable)
         {
             return m_DataTableManager.DestroyDataTable(dataTable);
         }
@@ -384,16 +372,6 @@ namespace UnityGameFramework.Runtime
         {
             Log.Warning("Load data table failure, asset name '{0}', error message '{1}'.", e.DataAssetName, e.ErrorMessage);
             m_EventComponent.Fire(this, LoadDataTableFailureEventArgs.Create(e));
-        }
-
-        private void OnReadDataUpdate(object sender, ReadDataUpdateEventArgs e)
-        {
-            m_EventComponent.Fire(this, LoadDataTableUpdateEventArgs.Create(e));
-        }
-
-        private void OnReadDataDependencyAsset(object sender, ReadDataDependencyAssetEventArgs e)
-        {
-            m_EventComponent.Fire(this, LoadDataTableDependencyAssetEventArgs.Create(e));
         }
     }
 }

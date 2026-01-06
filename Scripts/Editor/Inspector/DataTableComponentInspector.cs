@@ -15,11 +15,19 @@ namespace UnityGameFramework.Editor
     [CustomEditor(typeof(DataTableComponent))]
     internal sealed class DataTableComponentInspector : GameFrameworkInspector
     {
-        private SerializedProperty m_EnableLoadDataTableUpdateEvent = null;
-        private SerializedProperty m_EnableLoadDataTableDependencyAssetEvent = null;
+        // private SerializedProperty m_EnableLoadDataTableUpdateEvent = null;
+        // private SerializedProperty m_EnableLoadDataTableDependencyAssetEvent = null;
         private SerializedProperty m_CachedBytesSize = null;
 
         private HelperInfo<DataTableHelperBase> m_DataTableHelperInfo = new HelperInfo<DataTableHelperBase>("DataTable");
+
+        private HelperInfo<DataRowHelperResolverBase> m_DataRowHelperResolverInfo =
+            new HelperInfo<DataRowHelperResolverBase>("DataRowHelper")
+            {
+                HelperTypeNameFormat = "m_{0}ResolverTypeName",
+                CustomHelperFormat = "m_Custom{0}Resolver",
+                DisplayNameFormat = "{0} Resolver"
+            };
 
         public override void OnInspectorGUI()
         {
@@ -31,9 +39,10 @@ namespace UnityGameFramework.Editor
 
             EditorGUI.BeginDisabledGroup(EditorApplication.isPlayingOrWillChangePlaymode);
             {
-                EditorGUILayout.PropertyField(m_EnableLoadDataTableUpdateEvent);
-                EditorGUILayout.PropertyField(m_EnableLoadDataTableDependencyAssetEvent);
+                // EditorGUILayout.PropertyField(m_EnableLoadDataTableUpdateEvent);
+                // EditorGUILayout.PropertyField(m_EnableLoadDataTableDependencyAssetEvent);
                 m_DataTableHelperInfo.Draw();
+                m_DataRowHelperResolverInfo.Draw();
                 EditorGUILayout.PropertyField(m_CachedBytesSize);
             }
             EditorGUI.EndDisabledGroup();
@@ -64,11 +73,12 @@ namespace UnityGameFramework.Editor
 
         private void OnEnable()
         {
-            m_EnableLoadDataTableUpdateEvent = serializedObject.FindProperty("m_EnableLoadDataTableUpdateEvent");
-            m_EnableLoadDataTableDependencyAssetEvent = serializedObject.FindProperty("m_EnableLoadDataTableDependencyAssetEvent");
+            // m_EnableLoadDataTableUpdateEvent = serializedObject.FindProperty("m_EnableLoadDataTableUpdateEvent");
+            // m_EnableLoadDataTableDependencyAssetEvent = serializedObject.FindProperty("m_EnableLoadDataTableDependencyAssetEvent");
             m_CachedBytesSize = serializedObject.FindProperty("m_CachedBytesSize");
 
             m_DataTableHelperInfo.Init(serializedObject);
+            m_DataRowHelperResolverInfo.Init(serializedObject);
 
             RefreshTypeNames();
         }
@@ -81,6 +91,7 @@ namespace UnityGameFramework.Editor
         private void RefreshTypeNames()
         {
             m_DataTableHelperInfo.Refresh();
+            m_DataRowHelperResolverInfo.Refresh();
             serializedObject.ApplyModifiedProperties();
         }
     }
