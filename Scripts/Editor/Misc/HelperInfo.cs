@@ -24,6 +24,10 @@ namespace UnityGameFramework.Editor
         private string[] m_HelperTypeNames;
         private int m_HelperTypeNameIndex;
 
+        public string HelperTypeNameFormat { get; set; } = "m_{0}HelperTypeName";
+        public string CustomHelperFormat { get; set; } = "m_Custom{0}Helper";
+        public string DisplayNameFormat { get; set; } = "{0} Helper";
+
         public HelperInfo(string name)
         {
             m_Name = name;
@@ -36,14 +40,14 @@ namespace UnityGameFramework.Editor
 
         public void Init(SerializedObject serializedObject)
         {
-            m_HelperTypeName = serializedObject.FindProperty(Utility.Text.Format("m_{0}HelperTypeName", m_Name));
-            m_CustomHelper = serializedObject.FindProperty(Utility.Text.Format("m_Custom{0}Helper", m_Name));
+            m_HelperTypeName = serializedObject.FindProperty(Utility.Text.Format(HelperTypeNameFormat, m_Name));
+            m_CustomHelper = serializedObject.FindProperty(Utility.Text.Format(CustomHelperFormat, m_Name));
         }
 
         public void Draw()
         {
             string displayName = FieldNameForDisplay(m_Name);
-            int selectedIndex = EditorGUILayout.Popup(Utility.Text.Format("{0} Helper", displayName), m_HelperTypeNameIndex, m_HelperTypeNames);
+            int selectedIndex = EditorGUILayout.Popup(Utility.Text.Format(DisplayNameFormat, displayName), m_HelperTypeNameIndex, m_HelperTypeNames);
             if (selectedIndex != m_HelperTypeNameIndex)
             {
                 m_HelperTypeNameIndex = selectedIndex;
@@ -55,7 +59,7 @@ namespace UnityGameFramework.Editor
                 EditorGUILayout.PropertyField(m_CustomHelper);
                 if (m_CustomHelper.objectReferenceValue == null)
                 {
-                    EditorGUILayout.HelpBox(Utility.Text.Format("You must set Custom {0} Helper.", displayName), MessageType.Error);
+                    EditorGUILayout.HelpBox(Utility.Text.Format($"You must set Custom {DisplayNameFormat}.", displayName), MessageType.Error);
                 }
             }
         }

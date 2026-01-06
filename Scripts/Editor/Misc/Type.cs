@@ -5,8 +5,10 @@
 // Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
+using System;
 using GameFramework;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace UnityGameFramework.Editor
@@ -16,25 +18,26 @@ namespace UnityGameFramework.Editor
     /// </summary>
     internal static class Type
     {
-        private static readonly string[] RuntimeAssemblyNames =
-        {
-#if UNITY_2017_3_OR_NEWER
-            "UnityGameFramework.Runtime",
-#endif
-            "Assembly-CSharp",
-        };
-
-        private static readonly string[] RuntimeOrEditorAssemblyNames =
-        {
-#if UNITY_2017_3_OR_NEWER
-            "UnityGameFramework.Runtime",
-#endif
-            "Assembly-CSharp",
-#if UNITY_2017_3_OR_NEWER
-            "UnityGameFramework.Editor",
-#endif
-            "Assembly-CSharp-Editor",
-        };
+        //NOTE: 固定程序集会导致自定义的程序集无法被加载
+//         private static readonly string[] RuntimeAssemblyNames =
+//         {
+// #if UNITY_2017_3_OR_NEWER
+//             "UnityGameFramework.Runtime",
+// #endif
+//             "Assembly-CSharp",
+//         };
+//
+//         private static readonly string[] RuntimeOrEditorAssemblyNames =
+//         {
+// #if UNITY_2017_3_OR_NEWER
+//             "UnityGameFramework.Runtime",
+// #endif
+//             "Assembly-CSharp",
+// #if UNITY_2017_3_OR_NEWER
+//             "UnityGameFramework.Editor",
+// #endif
+//             "Assembly-CSharp-Editor",
+//         };
 
         /// <summary>
         /// 获取配置路径。
@@ -77,7 +80,12 @@ namespace UnityGameFramework.Editor
         /// <returns>指定基类的所有子类的名称。</returns>
         internal static string[] GetRuntimeTypeNames(System.Type typeBase)
         {
-            return GetTypeNames(typeBase, RuntimeAssemblyNames);
+            // return GetTypeNames(typeBase, RuntimeAssemblyNames);
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(type => typeBase.IsAssignableFrom(type) && !type.IsAbstract && !type.IsInterface && type.IsClass)
+                .Select(type => type.FullName)
+                .ToArray();
         }
 
         /// <summary>
@@ -85,10 +93,10 @@ namespace UnityGameFramework.Editor
         /// </summary>
         /// <param name="typeBase">基类类型。</param>
         /// <returns>指定基类的所有子类的名称。</returns>
-        internal static string[] GetRuntimeOrEditorTypeNames(System.Type typeBase)
-        {
-            return GetTypeNames(typeBase, RuntimeOrEditorAssemblyNames);
-        }
+        // internal static string[] GetRuntimeOrEditorTypeNames(System.Type typeBase)
+        // {
+        //     return GetTypeNames(typeBase, RuntimeOrEditorAssemblyNames);
+        // }
 
         private static string[] GetTypeNames(System.Type typeBase, string[] assemblyNames)
         {
